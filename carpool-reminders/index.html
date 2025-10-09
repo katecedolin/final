@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carpool Automator + Reminders</title>
+  <meta name="description" content="Build carpools and schedule volunteer SMS reminders." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚗</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); }
+    .card { box-shadow: 0 10px 20px rgba(2,6,23,0.06), 0 6px 6px rgba(2,6,23,0.06); }
+    .mono { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800">
+  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 grid place-items-center rounded-xl bg-indigo-600 text-white text-xl">🚗</div>
+        <h1 class="text-xl sm:text-2xl font-semibold">Carpool Automator</h1>
+      </div>
+      <a class="text-sm text-indigo-700 hover:text-indigo-900" href="#howto">How it works</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <section class="card rounded-2xl bg-white p-6">
+      <h2 class="text-lg font-semibold mb-4">Build your carpool</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-slate-700">Google Sheet link</label>
+          <input id="sheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/…/edit#gid=0"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+          <p class="text-xs text-slate-500 mt-1">Share setting must be: <em>Anyone with the link – Viewer</em>. We only read the sheet.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Event capacity (total attendees)</label>
+          <input id="eventCap" type="number" min="1" step="1" placeholder="e.g. 50"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Sheet tab (optional)</label>
+          <input id="gid" type="text" placeholder="gid (auto-detected if blank)"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+        </div>
+        <div class="sm:col-span-2 flex items-center gap-3 mt-2">
+          <button id="runBtn" class="rounded-xl bg-indigo-600 text-white px-5 py-2 font-medium hover:bg-indigo-700 active:bg-indigo-800 transition">
+            Build Carpool
+          </button>
+          <span id="status" class="text-sm text-slate-600"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- New: Reminder scheduler UI -->
+    <section class="card rounded-2xl bg-white p-6 mt-8">
+      <h2 class="text-lg font-semibold mb-4">Schedule Volunteer SMS Reminders</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Organization</label>
+          <input id="orgName" type="text" placeholder="e.g. Habitat for Humanity"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Event date</label>
+          <input id="eventDate" type="date"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Event time</label>
+          <input id="eventTime" type="time"
+                 class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-4 py-2" />
+        </div>
+        <div class="sm:col-span-3 flex items-center gap-3 mt-2">
+          <button id="scheduleBtn" class="rounded-xl bg-emerald-600 text-white px-5 py-2 font-medium hover:bg-emerald-700 active:bg-emerald-800 transition">
+            Schedule Reminders
+          </button>
+          <span id="scheduleStatus" class="text-sm text-slate-600"></span>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-3">Schedules confirmations immediately and a 9:00am PT reminder for the event day.</p>
+    </section>
+
+    <section id="results" class="mt-8"></section>
+
+    <section id="howto" class="mt-12 text-sm text-slate-600 leading-6">
+      <h3 class="text-base font-semibold text-slate-800 mb-2">How it works</h3>
+      <ol class="list-decimal pl-6 space-y-1">
+        <li>Paste your Google Sheets link to the <em>Responses</em> tab created by your form.</li>
+        <li>Enter your total event capacity. This limits the number of attendees we assign (drivers, self-drivers, riders combined).</li>
+        <li>Click <strong>Build Carpool</strong>.</li>
+        <li>Enter the Organization / Date / Time and click <strong>Schedule Reminders</strong>.</li>
+      </ol>
+      <p class="mt-2">We expect these column headers (case-insensitive): <code>Name</code>, <code>Transportation?</code>, and <code>If you can provide transportation for others</code>.</p>
+    </section>
+  </main>
+
+  <footer class="py-10 text-center text-xs text-slate-500">
+    Built for Netlify – client-side only + Netlify Functions. Your data never leaves your browser or your Twilio account.
+  </footer>
+
+  <script src="./script.js"></script>
+  <script src="./schedule.js"></script>
+</body>
+</html>

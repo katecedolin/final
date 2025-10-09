@@ -1,0 +1,16 @@
+# Netlify configuration
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Run the daily-check function every hour to pick up reminders that enter the Twilio window
+[[functions]]
+  name = "daily-check"
+  schedule = "0 * * * *" # every hour on the hour (UTC)

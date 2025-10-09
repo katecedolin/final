@@ -1,0 +1,16 @@
+{
+  "name": "carpool-reminders",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'no build'",
+    "deploy": "netlify deploy"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^6.4.0",
+    "luxon": "^3.5.0",
+    "twilio": "^5.3.3"
+  }
+}
