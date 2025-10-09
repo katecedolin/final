@@ -103,8 +103,13 @@ document.getElementById('runBtn')?.addEventListener('click', async () => {
       renderGroup('Riders', riders, r => `<li>${r.name} → ${r.driverName || 'unassigned'}</li>`) +
       renderGroup('Waitlist', waitlist, w => `<li>${w.name}</li>`);
 
-    // Expose for scheduler
+    // ---- NEW: expose to the scheduler in two ways ----
     window.currentCarpool = { drivers, selfDrivers, riders, waitlist };
+    // Fallback getter (schedule.js uses this if currentCarpool is missing)
+    window.getCarpoolAssignments = () => window.currentCarpool;
+    // Debug (you should see the object in Console after clicking Build)
+    console.log('Carpool ready:', window.currentCarpool);
+    // --------------------------------------------------
 
     setStatus('Carpool built successfully!', 'text-emerald-700');
   } catch (err) {
