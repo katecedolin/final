@@ -113,7 +113,8 @@ runBtn.addEventListener('click', async () => {
     const drivers = [];
     const selfDrivers = [];
     const riders = [];
-    const waitlist = needRides || [];
+    const waitlist = Array.isArray(needRides) ? needRides : [];
+
 
     // 1. Self-drivers
     if (carpools.length && carpools[0].every(p => p.transportation === 1)) {
