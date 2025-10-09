@@ -4,6 +4,11 @@ import { DateTime } from 'luxon';
 import twilio from 'twilio';
 import { getStore, list } from '@netlify/blobs';
 
+export const config = {
+  schedule: '0 * * * *', // every hour (UTC)
+};
+
+
 const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, MESSAGING_SERVICE_SID, TZ = 'America/Los_Angeles' } = process.env;
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
