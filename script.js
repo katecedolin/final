@@ -103,6 +103,46 @@ runBtn.addEventListener('click', async () => {
 
     renderSummary(carpools, needRides);
     setStatus('Done.');
+    // === Make data available for the SMS scheduler (scope-safe) ===
+
+// Build selfDrivers and drivers+riders purely from `carpools`
+const drivers = [];
+const selfDrivers = [];
+const riders = [];
+
+// 1) Self-drivers bucket is the first group if it exists and all are transportation === 1
+if (carpools.length && carpools[0].every(p => p.transportation === 1)) {
+  selfDrivers.push(...carpools[0].map(p => ({ name: p.name })));
+}
+
+// 2) Each remaining group: first entry is the driver, the rest are riders
+for (const group of carpools) {
+  if (!group.length || group.every(p => p.transportation === 1)) continue; // skip the self-drivers bucket
+  const driver = group[0];
+  const passengers = group.slice(1);
+
+  drivers.push({
+    name: driver.name,
+    seats: driver.carCap,
+    riders: passengers.map(p => ({ name: p.name }))
+  });
+
+  riders.push(...passengers.map(p => ({
+    name: p.name,
+    driverName: driver.name
+  })));
+}
+
+// 3) Waitlist = "leftover folks who still need a ride".
+// If `needRides` is in scope, use it; otherwise safely fallback to [].
+const waitlist = (typeof needRides !== 'undefined' && Array.isArray(needRides)) ? needRides.map(p => ({ name: p.name })) : [];
+
+// 4) Expose globally for schedule.js
+window.currentCarpool = { drivers, selfDrivers, riders, waitlist };
+window.getCarpoolAssignments = () => window.currentCarpool;
+console.log('Carpool ready:', window.currentCarpool);
+// ==============================================================
+
   } catch (err) {
     console.error(err);
     setStatus('Error.');
